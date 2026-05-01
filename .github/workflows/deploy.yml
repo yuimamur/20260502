@@ -1,0 +1,29 @@
+name: Production Deployment
+on:
+  push:
+    branches: [ main ]
+jobs:
+  provision-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Initialize Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Plan & Apply
+        run: |
+          terraform init
+          terraform apply -auto-approve
+
+      - name: Deploy Assets to S3
+        run: |
+          aws s3 sync . s3://new-devops-project-store-2026-05 --exclude "*" --include "index.html"
